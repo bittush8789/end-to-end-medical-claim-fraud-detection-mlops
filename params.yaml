@@ -1,0 +1,29 @@
+data:
+  raw_path: data/raw/claims_data.csv
+  processed_path: data/processed/engineered_claims_data.csv
+  test_size: 0.2
+  random_state: 42
+
+features:
+  numerical_cols:
+    - patient_age
+    - previous_claims
+    - claim_amount
+    - coverage_amount
+    - claim_to_coverage_ratio
+    - fraud_history_score
+    - claim_frequency_score
+    - risk_score
+    - average_claim_ratio
+  categorical_cols:
+    - gender
+    - policy_type
+    - hospital_type
+
+train:
+  model_type: catboost
+  catboost:
+    iterations: 100
+    learning_rate: 0.05
+    depth: 6
+    verbose: false
