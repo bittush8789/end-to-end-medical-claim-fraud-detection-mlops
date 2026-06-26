@@ -7,7 +7,65 @@ on:
       - cicd
 
 jobs:
-  mlops-pipeline:
+  setup-infra:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Kind
+        run: |
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+
+      - name: Install kubectl
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+
+      - name: Install Helm
+        run: |
+          curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+      - name: Create Kind cluster
+        run: |
+          kind create cluster --name mlops-test
+
+      - name: Add Helm repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+
+      - name: Deploy Prometheus & Grafana
+        run: |
+          kubectl create namespace monitoring || true
+          helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+            --namespace monitoring
+          helm upgrade --install grafana grafana/grafana \
+            --namespace monitoring --set adminPassword=admin
+
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+
+      - name: Configure DVC remote
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        run: |
+          dvc remote add -d s3remote s3://my-dvc-bucket/models
+          dvc remote modify s3remote access_key_id $AWS_ACCESS_KEY_ID
+          dvc remote modify s3remote secret_access_key $AWS_SECRET_ACCESS_KEY
+          dvc remote modify s3remote region $AWS_DEFAULT_REGION
+
+  build:
+    needs: setup-infra
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
