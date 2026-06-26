@@ -246,7 +246,70 @@ http://127.0.0.1:5000/
 
 ## 🛠️ MLOps Stack Setup & Commands
 
-Here are the commands to configure, execute, and deploy each tool in the MLOps pipeline:
+Here are the installation steps and commands to configure, execute, and deploy each tool in the MLOps pipeline:
+
+### ⚙️ Infrastructure & Cluster Setup (KIND)
+To run Kubernetes locally, you can spin up a KIND (Kubernetes in Docker) cluster:
+* **Create KIND Cluster**:
+  ```bash
+  kind create cluster --name medical-claim-cluster
+  ```
+* **Verify Cluster Status**:
+  ```bash
+  kubectl cluster-info
+  kubectl get nodes
+  ```
+
+---
+
+### 📦 MLOps Platform & Tooling Installation
+
+#### A. Kubeflow Pipelines Installation
+Deploy Kubeflow Pipelines standalone onto your local KIND cluster:
+```bash
+# Set deployment version
+export PIPELINE_VERSION=2.0.3
+
+# Apply manifests
+kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/cluster-scoped-resources?ref=$PIPELINE_VERSION"
+kubectl wait --for condition=established --timeout=60s crd/applications.app.k8s.io
+
+kubectl apply -k "github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic-pns?ref=$PIPELINE_VERSION"
+```
+
+#### B. Prometheus Installation (Monitoring)
+Install Prometheus via Helm to scrap metrics from the app:
+```bash
+# Add Prometheus Helm repository
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+# Install Prometheus
+helm install prometheus prometheus-community/prometheus \
+  --namespace monitoring \
+  --create-namespace \
+  --set server.persistentVolume.enabled=false
+```
+
+#### C. Grafana Installation (Visualization)
+Install Grafana to build analysis dashboards:
+```bash
+# Add Grafana Helm repository
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+# Install Grafana
+helm install grafana grafana/grafana \
+  --namespace monitoring \
+  --create-namespace \
+  --set adminPassword='admin'
+```
+*Port-forward to access Grafana UI (`http://localhost:3000`):*
+```bash
+kubectl port-forward deployment/grafana 3000:3000 -n monitoring
+```
+
+---
 
 ### 1️⃣ DVC (Data Version Control)
 DVC tracks your datasets and models without storing large files in GitHub.
