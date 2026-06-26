@@ -1,0 +1,28 @@
+==================================================
+      MEDICAL CLAIM FRAUD DETECTION REPORT        
+==================================================
+
+Best Model Selected: CatBoost
+
+--- Overall Performance Metrics (Test Set) ---
+Accuracy:  0.8685
+Precision: 0.5862
+Recall:    0.1245
+F1 Score:  0.2054
+ROC AUC:   0.7793
+
+--- Classification Report ---
+              precision    recall  f1-score   support
+
+           0       0.88      0.99      0.93      1727
+           1       0.59      0.12      0.21       273
+
+    accuracy                           0.87      2000
+   macro avg       0.73      0.56      0.57      2000
+weighted avg       0.84      0.87      0.83      2000
+
+--- Confusion Matrix ---
+True Negatives (Legit): 1703
+False Positives:        24
+False Negatives:        239
+True Positives (Fraud):  34

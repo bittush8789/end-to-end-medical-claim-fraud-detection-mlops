@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Result | HealthShield</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent border-bottom border-secondary py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-shield-check me-2 fs-3 text-info"></i>
+                <span class="fs-4">HealthShield</span>
+            </a>
+            <div class="collapse navbar-collapse justify-content-end">
+                <a class="btn btn-outline-light btn-sm" href="/predict"><i class="bi bi-arrow-left me-2"></i>Analyze Another Claim</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container my-5 animate-fade-in">
+        
+        <!-- Results Title -->
+        <div class="row mb-5">
+            <div class="col-12 text-center text-white">
+                <h2 class="display-6">Audit Classification Output</h2>
+                <p class="text-secondary">Machine learning evaluation details for Provider Audit reference</p>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            
+            <!-- Gauge / Score Card -->
+            <div class="col-lg-5">
+                <div class="glass-panel p-4 text-center text-white h-100 d-flex flex-column justify-content-center align-items-center">
+                    
+                    <!-- SVG Progress Circle -->
+                    <div class="position-relative d-inline-flex justify-content-center align-items-center my-3">
+                        <svg class="progress-ring" width="220" height="220">
+                            <circle class="progress-ring__circle" stroke="rgba(255,255,255,0.05)" stroke-width="12" fill="transparent" r="90" cx="110" cy="110"/>
+                            <!-- Colored stroke based on Risk Level -->
+                            {% if result.risk_level == 'High Risk' %}
+                                <circle id="risk-ring-circle" class="progress-ring__circle" stroke="url(#redGrad)" stroke-width="12" fill="transparent" r="90" cx="110" cy="110" data-probability="{{ result.fraud_probability }}" style="stroke-linecap: round;"/>
+                            {% elif result.risk_level == 'Medium Risk' %}
+                                <circle id="risk-ring-circle" class="progress-ring__circle" stroke="url(#orangeGrad)" stroke-width="12" fill="transparent" r="90" cx="110" cy="110" data-probability="{{ result.fraud_probability }}" style="stroke-linecap: round;"/>
+                            {% else %}
+                                <circle id="risk-ring-circle" class="progress-ring__circle" stroke="url(#greenGrad)" stroke-width="12" fill="transparent" r="90" cx="110" cy="110" data-probability="{{ result.fraud_probability }}" style="stroke-linecap: round;"/>
+                            {% endif %}
+                            
+                            <!-- Gradients definitions -->
+                            <defs>
+                                <linearGradient id="redGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#ef4444" />
+                                    <stop offset="100%" stop-color="#f97316" />
+                                </linearGradient>
+                                <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#f59e0b" />
+                                    <stop offset="100%" stop-color="#d97706" />
+                                </linearGradient>
+                                <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#10b981" />
+                                    <stop offset="100%" stop-color="#059669" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="position-absolute d-flex flex-column align-items-center">
+                            <span class="probability-display text-white">{{ result.fraud_probability }}%</span>
+                            <span class="text-secondary small uppercase tracking-wider">Fraud probability</span>
+                        </div>
+                    </div>
+
+                    <!-- Risk Level Badge -->
+                    <div class="mt-4">
+                        {% if result.risk_level == 'High Risk' %}
+                            <span class="badge bg-danger bg-opacity-25 border border-danger text-danger fs-5 px-4 py-2 rounded-pill">
+                                <i class="bi bi-shield-fill-x me-2"></i>{{ result.risk_level }}
+                            </span>
+                            <h3 class="mt-3 text-danger">Fraudulent Claim Pattern</h3>
+                        {% elif result.risk_level == 'Medium Risk' %}
+                            <span class="badge bg-warning bg-opacity-25 border border-warning text-warning fs-5 px-4 py-2 rounded-pill">
+                                <i class="bi bi-shield-fill-exclamation me-2"></i>{{ result.risk_level }}
+                            </span>
+                            <h3 class="mt-3 text-warning">Suspicious Activity Flagged</h3>
+                        {% else %}
+                            <span class="badge bg-success bg-opacity-25 border border-success text-success fs-5 px-4 py-2 rounded-pill">
+                                <i class="bi bi-shield-fill-check me-2"></i>{{ result.risk_level }}
+                            </span>
+                            <h3 class="mt-3 text-success">Legitimate Claim Profile</h3>
+                        {% endif %}
+                    </div>
+
+                    <div class="text-secondary small mt-3">
+                        Audited with <span class="text-white">{{ result.model_used }}</span> classifier confidence
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fraud Indicators / Explanations -->
+            <div class="col-lg-7">
+                <div class="glass-panel p-4 text-white h-100 d-flex flex-column justify-content-between">
+                    <div>
+                        <h4 class="mb-4"><i class="bi bi-search me-2 text-info"></i>Fraud Indicator Explanations</h4>
+                        
+                        <div class="indicators-list">
+                            {% for explanation in result.explanations %}
+                                <div class="indicator-item animate-fade-in delay-1">
+                                    {% if result.risk_level == 'High Risk' %}
+                                        <div class="indicator-bullet bullet-red"></div>
+                                    {% elif result.risk_level == 'Medium Risk' %}
+                                        <div class="indicator-bullet bullet-orange"></div>
+                                    {% else %}
+                                        <div class="indicator-bullet bullet-green"></div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-semibold text-white">{{ explanation }}</div>
+                                        <div class="text-secondary small mt-1">This signature factor deviates significantly from baseline healthcare reimbursement limits.</div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="mt-4 pt-3 border-top border-secondary d-flex gap-3">
+                        <a href="/predict" class="btn btn-premium w-50">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Audit New Claim
+                        </a>
+                        <a href="/" class="btn btn-outline-premium w-50">
+                            <i class="bi bi-grid-1x2-fill me-2"></i>Exit to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Claim Details Summary Table -->
+            <div class="col-12 animate-fade-in delay-2">
+                <div class="glass-panel p-4 text-white">
+                    <h5 class="mb-4"><i class="bi bi-table me-2 text-info"></i>Audited Claim Summary</h5>
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover table-borderless align-middle">
+                            <thead>
+                                <tr class="text-secondary border-bottom border-secondary">
+                                    <th>Metric Category</th>
+                                    <th>Audited Value</th>
+                                    <th>Metric Category</th>
+                                    <th>Audited Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-secondary">Patient Age / Gender</td>
+                                    <td>{{ claim.patient_age }} years / {{ claim.gender }}</td>
+                                    <td class="text-secondary">Claim Amount</td>
+                                    <td class="fw-bold text-info">${{ "{:,.2f}".format(claim.claim_amount) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Policy Type / Tenure</td>
+                                    <td>{{ claim.policy_type }} / {{ claim.policy_tenure }} mos</td>
+                                    <td class="text-secondary">Hospital Type</td>
+                                    <td>{{ claim.hospital_type }} Facility</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Previous Claims Count</td>
+                                    <td>{{ claim.previous_claims }}</td>
+                                    <td class="text-secondary">Length of Stay / Emergency</td>
+                                    <td>{{ claim.length_of_stay }} days / {{ 'Yes' if claim.emergency_admission == 1 else 'No' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Provider ID / Total Claims</td>
+                                    <td>{{ claim.provider_id }} ({{ claim.provider_claim_count }} records)</td>
+                                    <td class="text-secondary">Provider Previous Fraud Cases</td>
+                                    <td>{{ claim.previous_fraud_cases }} cases</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-secondary">Coverage Amount</td>
+                                    <td>${{ "{:,.2f}".format(claim.coverage_amount) }}</td>
+                                    <td class="text-secondary">Deductible Amount</td>
+                                    <td>${{ "{:,.2f}".format(claim.deductible_amount) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-top border-secondary py-4 mt-5 text-center text-secondary small">
+        <div class="container">
+            <p class="mb-0">&copy; 2026 HealthShield AI Insurance Systems. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- App JS containing Ring Circle offset calculations -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

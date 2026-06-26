@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyze Claim | HealthShield</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent border-bottom border-secondary py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-shield-check me-2 fs-3 text-info"></i>
+                <span class="fs-4">HealthShield</span>
+            </a>
+            <div class="collapse navbar-collapse justify-content-end">
+                <a class="btn btn-outline-light btn-sm" href="/"><i class="bi bi-arrow-left me-2"></i>Back to Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container my-5 animate-fade-in">
+        
+        <div class="row mb-4">
+            <div class="col-12 d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="text-white mb-1">Claim Risk Profiler</h2>
+                    <p class="text-secondary">Enter claim and provider information to run the AI fraud analysis.</p>
+                </div>
+                <div class="btn-group gap-2">
+                    <button class="btn btn-outline-success btn-sm rounded" onclick="populateForm('legitimate')">
+                        <i class="bi bi-patch-check-fill me-1"></i>Fill Low-Risk Claim
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm rounded" onclick="populateForm('fraudulent')">
+                        <i class="bi bi-exclamation-octagon-fill me-1"></i>Fill Suspicious Claim
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger border-danger bg-danger bg-opacity-10 text-white mb-4">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+        </div>
+        {% endif %}
+
+        <form action="/predict" method="POST">
+            <div class="row g-4">
+                
+                <!-- Patient Information Card -->
+                <div class="col-md-6">
+                    <div class="glass-panel p-4 h-100 text-white">
+                        <h5 class="text-info mb-4 border-bottom border-secondary pb-2">
+                            <i class="bi bi-person-fill me-2"></i>Patient Information
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="patient_age" class="form-label">Patient Age</label>
+                                <input type="number" class="form-control" id="patient_age" name="patient_age" min="1" max="120" value="45" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="gender" class="form-label">Gender</label>
+                                <select class="form-select" id="gender" name="gender" required>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="policy_type" class="form-label">Policy Type</label>
+                                <select class="form-select" id="policy_type" name="policy_type" required>
+                                    <option value="Gold">Gold</option>
+                                    <option value="Silver" selected>Silver</option>
+                                    <option value="Bronze">Bronze</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="policy_tenure" class="form-label">Policy Tenure (Months)</label>
+                                <input type="number" class="form-control" id="policy_tenure" name="policy_tenure" min="0" value="24" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="previous_claims" class="form-label">Previous Claims Count (Patient)</label>
+                                <input type="number" class="form-control" id="previous_claims" name="previous_claims" min="0" value="2" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Claim Information Card -->
+                <div class="col-md-6">
+                    <div class="glass-panel p-4 h-100 text-white">
+                        <h5 class="text-info mb-4 border-bottom border-secondary pb-2">
+                            <i class="bi bi-file-earmark-medical-fill me-2"></i>Claim Details
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="claim_amount" class="form-label">Claim Amount ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="claim_amount" name="claim_amount" min="1" value="12000" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="hospital_type" class="form-label">Hospital Type</label>
+                                <select class="form-select" id="hospital_type" name="hospital_type" required>
+                                    <option value="Public">Public</option>
+                                    <option value="Private" selected>Private</option>
+                                    <option value="Specialty">Specialty</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="procedure_code" class="form-label">Procedure Code</label>
+                                <select class="form-select" id="procedure_code" name="procedure_code" required>
+                                    <option value="P001" selected>P001 - Routine Exam</option>
+                                    <option value="P002">P002 - Diagnostic Lab</option>
+                                    <option value="P003">P003 - Outpatient Surgery</option>
+                                    <option value="P004">P004 - Inpatient Intensive Care</option>
+                                    <option value="P005">P005 - Specialized Rehab</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="diagnosis_code" class="form-label">Diagnosis Code</label>
+                                <select class="form-select" id="diagnosis_code" name="diagnosis_code" required>
+                                    <option value="D001" selected>D001 - General Symptoms</option>
+                                    <option value="D002">D002 - Chronic Illness Management</option>
+                                    <option value="D003">D003 - Infection / Acute Treatment</option>
+                                    <option value="D004">D004 - Trauma / Major Injury</option>
+                                    <option value="D005">D005 - Complex Comorbidity</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="length_of_stay" class="form-label">Length of Stay (Days)</label>
+                                <input type="number" class="form-control" id="length_of_stay" name="length_of_stay" min="0" value="4" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="emergency_admission" class="form-label">Emergency Admission</label>
+                                <select class="form-select" id="emergency_admission" name="emergency_admission" required>
+                                    <option value="0">No</option>
+                                    <option value="1" selected>Yes</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Provider Information Card -->
+                <div class="col-md-6">
+                    <div class="glass-panel p-4 h-100 text-white">
+                        <h5 class="text-info mb-4 border-bottom border-secondary pb-2">
+                            <i class="bi bi-hospital-fill me-2"></i>Provider History
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="provider_id" class="form-label">Provider ID</label>
+                                <input type="text" class="form-control" id="provider_id" name="provider_id" placeholder="PROV0010" value="PROV0010" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="provider_claim_count" class="form-label">Provider Claim Count</label>
+                                <input type="number" class="form-control" id="provider_claim_count" name="provider_claim_count" min="1" value="50" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="previous_fraud_cases" class="form-label">Previous Fraud Cases (Provider)</label>
+                                <input type="number" class="form-control" id="previous_fraud_cases" name="previous_fraud_cases" min="0" value="1" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial / Coverage Details -->
+                <div class="col-md-6">
+                    <div class="glass-panel p-4 h-100 text-white">
+                        <h5 class="text-info mb-4 border-bottom border-secondary pb-2">
+                            <i class="bi bi-currency-dollar me-2"></i>Insurance Coverage
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="coverage_amount" class="form-label">Coverage Amount ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="coverage_amount" name="coverage_amount" min="0" value="40000" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="deductible_amount" class="form-label">Deductible ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="deductible_amount" name="deductible_amount" min="0" value="500" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Section -->
+                <div class="col-12 text-center mt-5">
+                    <button type="submit" class="btn btn-premium btn-lg w-50">
+                        <i class="bi bi-shield-shaded me-2"></i>Evaluate Claim Validity
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-top border-secondary py-4 mt-5 text-center text-secondary small">
+        <div class="container">
+            <p class="mb-0">&copy; 2026 HealthShield AI Insurance Systems. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- App JS containing Scenarios -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

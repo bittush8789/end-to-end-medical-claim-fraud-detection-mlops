@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthShield | Medical Claim Fraud Detection System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-transparent border-bottom border-secondary py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-shield-check me-2 fs-3 text-info"></i>
+                <span class="fs-4">HealthShield</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-premium fs-6 ms-2" href="/predict">Analyze Claim</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container my-5">
+        
+        <!-- Hero Section -->
+        <div class="row align-items-center mb-5 animate-fade-in">
+            <div class="col-lg-8">
+                <h1 class="display-4 text-white mb-3">AI-Powered Fraud Intelligence</h1>
+                <p class="lead text-secondary col-md-10">
+                    HealthShield protects healthcare organizations by analyzing insurance claims in real-time. Leveraging CatBoost and advanced feature engineering, the system identifies anomalies, risk levels, and provides explainable indicators.
+                </p>
+                <div class="mt-4">
+                    <a href="/predict" class="btn btn-premium me-3">
+                        <i class="bi bi-search me-2"></i>Analyze a New Claim
+                    </a>
+                    <a href="#metrics" class="btn btn-outline-premium">
+                        <i class="bi bi-bar-chart me-2"></i>Performance Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="row g-4 mb-5 animate-fade-in delay-1">
+            <div class="col-md-3 col-sm-6">
+                <div class="glass-panel stat-card text-white">
+                    <div class="text-secondary small mb-1">Total Claims Audited</div>
+                    <div class="stat-val">{{ stats.total_claims }}</div>
+                    <i class="bi bi-file-earmark-medical position-absolute end-0 bottom-0 mb-3 me-3 fs-3 text-info opacity-25"></i>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="glass-panel stat-card text-white">
+                    <div class="text-secondary small mb-1">Avg Claim Size</div>
+                    <div class="stat-val">{{ stats.avg_claim }}</div>
+                    <i class="bi bi-currency-dollar position-absolute end-0 bottom-0 mb-3 me-3 fs-3 text-success opacity-25"></i>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="glass-panel stat-card text-white">
+                    <div class="text-secondary small mb-1">Estimated Fraud Rate</div>
+                    <div class="stat-val text-warning">{{ stats.fraud_rate }}</div>
+                    <i class="bi bi-exclamation-triangle position-absolute end-0 bottom-0 mb-3 me-3 fs-3 text-warning opacity-25"></i>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="glass-panel stat-card text-white">
+                    <div class="text-secondary small mb-1">Prevented Fraud Payouts</div>
+                    <div class="stat-val text-danger">{{ stats.prevented_payouts }}</div>
+                    <i class="bi bi-shield-lock position-absolute end-0 bottom-0 mb-3 me-3 fs-3 text-danger opacity-25"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- ML Performance & Reports Section -->
+        <div class="row g-4 animate-fade-in delay-2" id="metrics">
+            <div class="col-12">
+                <h2 class="text-white mb-4"><i class="bi bi-bar-chart-line-fill text-info me-2"></i>Model Analytics & Performance</h2>
+            </div>
+            
+            <!-- Figures / Carousel -->
+            <div class="col-lg-7">
+                <div class="glass-panel p-4 h-100">
+                    <h5 class="text-white mb-4">Model Insights</h5>
+                    
+                    <!-- Tabs for Plots -->
+                    <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active text-white" id="pills-features-tab" data-bs-toggle="pill" data-bs-target="#pills-features" type="button" role="tab">Feature Importance</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-white" id="pills-roc-tab" data-bs-toggle="pill" data-bs-target="#pills-roc" type="button" role="tab">ROC Curve</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link text-white" id="pills-cm-tab" data-bs-toggle="pill" data-bs-target="#pills-cm" type="button" role="tab">Confusion Matrix</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="pills-tabContent">
+                        <div class="tab-pane fade show active text-center" id="pills-features" role="tabpanel">
+                            <!-- Show figure -->
+                            <img src="/reports/figures/feature_importance.png" alt="Feature Importance" class="img-fluid rounded border border-secondary" onerror="this.src='https://via.placeholder.com/800x480/11182c/ffffff?text=Feature+Importance+Chart';">
+                        </div>
+                        <div class="tab-pane fade text-center" id="pills-roc" role="tabpanel">
+                            <img src="/reports/figures/roc_curve.png" alt="ROC Curve" class="img-fluid rounded border border-secondary" onerror="this.src='https://via.placeholder.com/800x480/11182c/ffffff?text=ROC+Curve+Chart';">
+                        </div>
+                        <div class="tab-pane fade text-center" id="pills-cm" role="tabpanel">
+                            <img src="/reports/figures/confusion_matrix.png" alt="Confusion Matrix" class="img-fluid rounded border border-secondary" onerror="this.src='https://via.placeholder.com/800x480/11182c/ffffff?text=Confusion+Matrix+Chart';">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model specs -->
+            <div class="col-lg-5">
+                <div class="glass-panel p-4 h-100 d-flex flex-column justify-content-between text-white">
+                    <div>
+                        <h5 class="text-info mb-3"><i class="bi bi-cpu me-2"></i>Machine Learning Specs</h5>
+                        <p class="text-secondary small">
+                            Our training pipeline automatically compares multiple machine learning algorithms. The production model currently uses:
+                        </p>
+                        <div class="border-top border-secondary pt-3 mt-2">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-secondary">Best Estimator</span>
+                                <span class="badge bg-primary fs-6">CatBoost</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-secondary">Validation ROC AUC</span>
+                                <span class="text-success font-monospace fw-bold">0.7793</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-secondary">Precision</span>
+                                <span class="text-info font-monospace fw-bold">58.6%</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-secondary">Sensitivity (Recall)</span>
+                                <span class="text-warning font-monospace fw-bold">12.5%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-dark bg-black bg-opacity-25 border border-secondary mt-4 mb-0">
+                        <i class="bi bi-info-circle text-info me-2"></i>
+                        <strong>Why CatBoost?</strong> High-speed gradient boosting on decision trees with powerful out-of-the-box support for categorical interactions like Provider ID and Procedure Codes.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-top border-secondary py-4 mt-5 text-center text-secondary small">
+        <div class="container">
+            <p class="mb-0">&copy; 2026 HealthShield AI Insurance Systems. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
