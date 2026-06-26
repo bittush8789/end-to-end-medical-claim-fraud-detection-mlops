@@ -248,6 +248,43 @@ http://127.0.0.1:5000/
 
 Here are the installation steps and commands to configure, execute, and deploy each tool in the MLOps pipeline:
 
+### 🛠️ CLI & Software Installation
+
+Before starting, install the required command-line interfaces (CLIs) and software:
+
+#### 1. Docker
+* Install Docker Desktop for your OS from [Docker Hub](https://www.docker.com/products/docker-desktop/). Ensure Docker daemon is running.
+
+#### 2. Chocolatey (Package Manager for Windows) / Homebrew (for macOS/Linux)
+* **Windows (PowerShell as Admin)**:
+  ```powershell
+  Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+  ```
+
+#### 3. Kubernetes Tools (KIND, kubectl, Helm)
+* **Windows (Chocolatey)**:
+  ```bash
+  choco install kind kubernetes-cli kubernetes-helm -y
+  ```
+* **macOS (Homebrew)**:
+  ```bash
+  brew install kind kubectl helm
+  ```
+
+#### 4. DVC CLI
+* Install via pip or system package manager:
+  ```bash
+  pip install dvc dvc[s3]
+  ```
+
+#### 5. MLflow & Python libraries
+* Install via pip:
+  ```bash
+  pip install mlflow evidently kfp
+  ```
+
+---
+
 ### ⚙️ Infrastructure & Cluster Setup (KIND)
 To run Kubernetes locally, you can spin up a KIND (Kubernetes in Docker) cluster:
 * **Create KIND Cluster**:
@@ -303,13 +340,34 @@ helm install grafana grafana/grafana \
   --namespace monitoring \
   --create-namespace \
   --set adminPassword='admin'
-```
 *Port-forward to access Grafana UI (`http://localhost:3000`):*
 ```bash
 kubectl port-forward deployment/grafana 3000:3000 -n monitoring
 ```
 
+#### D. KServe Installation (Model Serving)
+Deploy the KServe model serving framework components:
+```bash
+# Install cert-manager (required by KServe)
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml
+kubectl wait --for=condition=Available --timeout=300s deployment/cert-manager-webhook -n cert-manager
+
+# Install KServe core components
+kubectl apply -f https://github.com/kserve/kserve/releases/download/v0.11.0/kserve.yaml
+```
+
+#### E. ArgoCD Installation (GitOps Engine)
+Set up ArgoCD to monitor the repo and deploy resource definitions automatically:
+```bash
+# Create Namespace
+kubectl create namespace argocd
+
+# Apply installation manifest
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
 ---
+
 
 ### 1️⃣ DVC (Data Version Control)
 DVC tracks your datasets and models without storing large files in GitHub.
