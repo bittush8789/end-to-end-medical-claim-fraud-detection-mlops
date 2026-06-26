@@ -244,6 +244,106 @@ http://127.0.0.1:5000/
 
 ---
 
+## 🛠️ MLOps Stack Setup & Commands
+
+Here are the commands to configure, execute, and deploy each tool in the MLOps pipeline:
+
+### 1️⃣ DVC (Data Version Control)
+DVC tracks your datasets and models without storing large files in GitHub.
+
+* **Initialize DVC**:
+  ```bash
+  dvc init
+  ```
+* **Add AWS S3 Remote**:
+  ```bash
+  dvc remote add -d myremote s3://diabetes-model-bucket/models
+  ```
+* **Track Artifacts**:
+  ```bash
+  dvc add models/trained_model.pkl
+  ```
+* **Push Artifacts to S3**:
+  ```bash
+  dvc push
+  ```
+
+---
+
+### 2️⃣ MLflow (Experiment Tracking & Registry)
+MLflow tracks parameters, metrics, and models across runs.
+
+* **Start local MLflow Tracking Server**:
+  ```bash
+  mlflow server --host 127.0.0.1 --port 5000
+  ```
+* **View Run Dashboard**:  
+  Navigate to `http://127.0.0.1:5000` to view the parameters, metric comparison charts (F1-score, Recall, ROC AUC), and registered model files.
+
+---
+
+### 3️⃣ Evidently AI (Data Validation & Drift Detection)
+Evidently evaluates data quality and checks for feature/target drift.
+
+* **Run Data Validation**:
+  ```bash
+  python src/data_validation.py
+  ```
+* **View Drift Report**:  
+  Open `reports/evidently_drift_report.html` in any browser to inspect interactive drift distributions and data quality metrics.
+
+---
+
+### 4️⃣ Kubeflow Pipelines (KFP)
+Kubeflow orchestrates the machine learning training pipeline steps as reproducible containerized steps.
+
+* **Compile the Pipeline**:
+  ```bash
+  python src/kubeflow_pipeline.py
+  ```
+  *This compiles the pipeline into `medical_claim_pipeline.yaml`.*
+* **Deploy to Kubeflow**:  
+  Upload the compiled `medical_claim_pipeline.yaml` through the Kubeflow Pipelines UI to trigger automated runs.
+
+---
+
+### 5️⃣ Helm & Kubernetes Deployment
+Deploy the dockerized service onto a Kubernetes cluster.
+
+* **Build the Docker Image**:
+  ```bash
+  docker build -t bittush8789/medical-claim-fraud-detection:latest .
+  ```
+* **Lint the Helm Chart**:
+  ```bash
+  helm lint helm/medical-fraud-detection
+  ```
+* **Deploy using Helm**:
+  ```bash
+  helm install medical-fraud-detector helm/medical-fraud-detection --namespace medical-fraud-detection --create-namespace
+  ```
+* **Upgrade Release**:
+  ```bash
+  helm upgrade medical-fraud-detector helm/medical-fraud-detection --namespace medical-fraud-detection
+  ```
+
+---
+
+### 6️⃣ ArgoCD (GitOps Sync)
+ArgoCD automatically detects changes in your GitHub repository and reconciles them with the Kubernetes cluster.
+
+* **Deploy ArgoCD Application**:
+  ```bash
+  kubectl apply -f argocd/application.yaml
+  ```
+* **Sync Application**:
+  ```bash
+  argocd app sync medical-claim-fraud-detection-mlops
+  ```
+
+---
+
+
 ## 📊 Model Performance
 
 The training pipeline automatically compares 5 algorithms and selects the best based on F1-Score:
