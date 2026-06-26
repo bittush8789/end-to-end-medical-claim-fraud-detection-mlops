@@ -124,6 +124,20 @@ class ModelTrainer:
                 best_f1 = f1
                 best_model = clf
                 best_model_name = name
+                
+            # Log to MLflow
+            try:
+                import mlflow
+                with mlflow.start_run(run_name=name, nested=True):
+                    mlflow.log_param("model_type", name)
+                    mlflow.log_metric("accuracy", acc)
+                    mlflow.log_metric("precision", prec)
+                    mlflow.log_metric("recall", rec)
+                    mlflow.log_metric("f1_score", f1)
+                    mlflow.log_metric("roc_auc", roc_auc)
+                    mlflow.sklearn.log_model(clf, artifact_path=name)
+            except Exception as e:
+                logger.warning(f"Failed to log to MLflow: {e}")
         
         logger.info(f"Best Model Selected: {best_model_name} with F1-Score: {best_f1:.4f}")
         
@@ -131,6 +145,16 @@ class ModelTrainer:
         best_model_path = os.path.join(self.model_dir, "trained_model.pkl")
         joblib.dump(best_model, best_model_path)
         logger.info(f"Saved best model ({best_model_name}) to {best_model_path}")
+        
+        # Log Best Model to MLflow global run
+        try:
+            import mlflow
+            with mlflow.start_run(run_name="Best_Model_Selection"):
+                mlflow.log_param("selected_model", best_model_name)
+                mlflow.log_metric("best_f1_score", best_f1)
+                mlflow.sklearn.log_model(best_model, artifact_path="best_model")
+        except Exception as e:
+            logger.warning(f"Failed to log best model to MLflow: {e}")
         
         # Save model details
         details_path = os.path.join(self.model_dir, "model_details.pkl")
@@ -151,3 +175,4 @@ class ModelTrainer:
 if __name__ == "__main__":
     trainer = ModelTrainer()
     trainer.train_and_select_best_model()
+

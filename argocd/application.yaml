@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/bittush8789/end-to-end-medical-claim-fraud-detection-mlops.git
     targetRevision: HEAD
-    path: k8s
+    path: helm/medical-fraud-detection
   destination:
     server: https://kubernetes.default.svc
     namespace: medical-fraud-detection
@@ -18,3 +18,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+

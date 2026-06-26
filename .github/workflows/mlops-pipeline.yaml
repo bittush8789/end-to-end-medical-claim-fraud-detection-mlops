@@ -32,8 +32,13 @@ jobs:
           python src/data_ingestion.py
           python src/feature_engineering.py
 
-      - name: Train Models & Evaluate
+      - name: Run Data Validation (Evidently AI)
         run: |
+          python src/data_validation.py
+
+      - name: Train Models & Evaluate (with MLflow tracking)
+        run: |
+          # Start a local MLflow tracking server or use mlflow API
           python src/train.py
           python src/evaluate.py
 
@@ -64,16 +69,17 @@ jobs:
           push: false # set to true when credentials are provided
           tags: bittush8789/medical-claim-fraud-detection:latest
 
-      - name: Update KServe Manifest
+      - name: Update Helm Chart Deployment Version
         run: |
-          # Example of modifying the image or version dynamically if needed
-          echo "Updating deployment version..."
+          # Dynamically set appVersion or image tag inside Helm Chart values.yaml
+          sed -i "s/tag: .*/tag: \"latest\"/g" helm/medical-fraud-detection/values.yaml
 
       - name: Commit and Push changes
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
-          git add k8s/inference.yaml dvc.yaml.dvc || true
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update model and configs [skip ci]"
+          git add helm/medical-fraud-detection/values.yaml dvc.yaml.dvc || true
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update model, Helm charts and configs [skip ci]"
           # git push (configured in action settings if SSH/Auth token exists)
         continue-on-error: true
+

@@ -1,0 +1,25 @@
+apiVersion: "serving.kserve.io/v1beta1"
+kind: "InferenceService"
+metadata:
+  name: "medical-fraud-detector"
+  namespace: {{ .Values.namespace.name | quote }}
+spec:
+  predictor:
+    serviceAccountName: {{ .Values.serviceAccount.name | quote }}
+    containers:
+      - name: kserve-container
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+          - containerPort: 5000
+            protocol: TCP
+        env:
+          - name: PORT
+            value: "5000"
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu | quote }}
+            memory: {{ .Values.resources.limits.memory | quote }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu | quote }}
+            memory: {{ .Values.resources.requests.memory | quote }}

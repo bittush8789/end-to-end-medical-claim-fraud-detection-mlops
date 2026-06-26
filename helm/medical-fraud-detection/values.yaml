@@ -1,0 +1,20 @@
+replicaCount: 1
+
+image:
+  repository: bittush8789/medical-claim-fraud-detection
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+namespace:
+  name: medical-fraud-detection
+
+serviceAccount:
+  name: medical-fraud-sa
+
+resources:
+  limits:
+    cpu: "2"
+    memory: 4Gi
+  requests:
+    cpu: "1"
+    memory: 2Gi

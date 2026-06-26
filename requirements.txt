@@ -10,3 +10,5 @@ flask
 ipykernel
 notebook
 kfp
+evidently
+mlflow
